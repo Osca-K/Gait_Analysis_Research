@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gait Cycle Analysis Using Single IMU System | Osca Kholopha</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0b0b0d;
+            --bg-secondary: #101013;
+            --bg-card: #111114;
+            --bg-card-alt: #0f0f12;
+            --text-primary: #f2f2f4;
+            --text-muted: #b9b9c3;
+            --text-muted-dark: #8c8c98;
+            --accent: #6e7cff;
+            --border: rgba(255,255,255,.10);
+            --border-light: rgba(255,255,255,.06);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: Consolas, "Courier New", Monaco, "Lucida Console", monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* Animated Grid Background */
+        .grid-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+            background-size: 80px 80px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .grid-cell {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border: 1px solid rgba(110, 124, 255, 0.3);
+            animation: glowPulse 4s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0; box-shadow: 0 0 10px rgba(110, 124, 255, 0); }
+            50% { opacity: 1; box-shadow: 0 0 20px rgba(110, 124, 255, 0.4); }
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(11, 11, 13, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            padding: 1rem 2rem;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        /* Main Content */
+        main {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 6rem 2rem 4rem;
+        }
+
+        /* Header Section */
+        .paper-header {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 3rem;
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        .paper-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .paper-meta {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin: 1rem 0;
+        }
+
+        .paper-meta strong {
+            color: var(--text-primary);
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(110, 124, 255, 0.15);
+            color: var(--accent);
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+        }
+
+        /* Section Cards */
+        section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            margin: 2rem 0 1rem;
+        }
+
+        h4 {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 1rem 0 1rem 2rem;
+            color: var(--text-muted);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Figures */
+        .figure {
+            background: var(--bg-card-alt);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .figure-caption {
+            color: var(--text-muted-dark);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            font-style: italic;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 2rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card-alt);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        th {
+            background: rgba(110, 124, 255, 0.1);
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        td {
+            color: var(--text-muted);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Equations */
+        .equation {
+            background: var(--bg-card-alt);
+            border-left: 3px solid var(--accent);
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            font-family: "Times New Roman", serif;
+            color: var(--text-primary);
+            overflow-x: auto;
+        }
+
+        /* References */
+        .reference {
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+            text-indent: -2rem;
+            color: var(--text-muted-dark);
+            font-size: 0.9rem;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            color: var(--accent);
+            font-size: 0.9rem;
+        }
+
+        /* Highlights */
+        .highlight-box {
+            background: rgba(110, 124, 255, 0.08);
+            border-left: 4px solid var(--accent);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+        }
+
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--accent);
+            color: var(--bg-primary);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: transform 0.3s;
+            z-index: 999;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: var(--bg-secondary);
+                flex-direction: column;
+                padding: 1rem;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .paper-header h1 {
+                font-size: 1.8rem;
+            }
+
+            section {
+                padding: 1.5rem;
+            }
+
+            main {
+                padding: 5rem 1rem 2rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+
+            nav, .back-to-top, .grid-background {
+                display: none;
+            }
+
+            section {
+                page-break-inside: avoid;
+                border: 1px solid #ccc;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Grid Background -->
+    <div class="grid-background" id="gridBg"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="#" class="nav-brand">← Portfolio</a>
+            <button class="mobile-menu-btn" onclick="toggleMenu()">☰</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#abstract">Abstract</a></li>
+                <li><a href="#introduction">Introduction</a></li>
+                <li><a href="#methodology">Methodology</a></li>
+                <li><a href="#results">Results</a></li>
+                <li><a href="#conclusion">Conclusion</a></li>
+                <li><a href="#references">References</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Paper Header -->
+        <div class="paper-header">
+            <h1>Person's Gait Cycle Analysis Using Single IMU System</h1>
+            <div class="paper-meta">
+                <strong>Author:</strong> Osca Kholopha (1863498)<br>
+                <strong>Course:</strong> MECN4006 - Mechanical Engineering Research Project<br>
+                <strong>Project Code:</strong> ATK9<br>
+                <strong>Supervisor:</strong> M. Michael<br>
+                <strong>Date:</strong> October 5, 2024
+            </div>
+            <div class="badge">Ethics Clearance: MIAEC 109/24W</div>
+        </div>
+
+        <!-- Abstract -->
+        <section id="abstract">
+            <h2>Abstract</h2>
+            <p>This research investigates the use of a single Inertial Measurement Unit (IMU) embedded in an Android device to analyse human gait cycles in real-world conditions. Ethics approval was granted by the Human Research Ethics Committee (Non-Medical) at the University of the Witwatersrand (Clearance No. MIAEC 109/24W).</p>
+            
+            <p>A mobile application model was developed to collect IMU data of acceleration, angular velocity, and orientation as well as GPS data for simultaneous motion tracking. GPS readings were used to validate displacement estimates derived from IMU integration, confirming the system's reliability in real-time movement analysis.</p>
+            
+            <p>Data was collected across three gait categories: relaxed walking, fast walking, and jogging. Each category was sampled at a distinct rate to match its motion dynamics: 25 Hz for relaxed walking, 75 Hz for fast walking, and 100 Hz for jogging. The device was tested in two placements: inside the pocket and held by hand.</p>
+            
+            <div class="highlight-box">
+                <p><strong>Key Findings:</strong></p>
+                <ul>
+                    <li>Jogging produced peak accelerations of 18.2 m/s² with stance durations averaging 0.32 seconds</li>
+                    <li>Relaxed walking showed lower peak accelerations around 9.5 m/s² with longer stance durations near 0.58 seconds</li>
+                    <li>Fast walking exhibited intermediate values with stride intervals averaging 1.12 seconds</li>
+                    <li>Despite increased signal noise in handheld configuration, gait phase detection remained reliable</li>
+                </ul>
+            </div>
+            
+            <p>These findings demonstrate that a single IMU, combined with adaptive sampling rates and GPS validation, can effectively distinguish gait types and phases. The system offers a low-cost, portable solution for gait analysis with applications in fitness tracking, health monitoring, and biometric identification.</p>
+        </section>
+
+        <!-- Introduction -->
+        <section id="introduction">
+            <h2>1. Introduction</h2>
+            
+            <h3>1.1 Background and Motivation</h3>
+            <p>Gait refers to the pattern of movement that enables locomotion. It involves a rhythmic series of leg movements that propel the body forward while conserving energy. The application of gait analysis has grown significantly, finding relevance in areas such as healthcare, sports science, security recognition systems, and fitness. This project focuses on gait analysis for recognition purposes.</p>
+            
+            <p>A number of studies have investigated gait analysis, including notable contributions from Chen et al. and Gaud et al. These researchers employed different data collection methods for gait analyses, characterised into:</p>
+            <ul>
+                <li><strong>Non-Wearable Sensors (NWS):</strong> Systems that collect data in controlled environments with strategically placed sensors</li>
+                <li><strong>Wearable Sensors (WS):</strong> Systems offering flexibility with sensors positioned on different body parts</li>
+                <li><strong>Image Processing (IP):</strong> Vision-based systems for gait analysis</li>
+            </ul>
+            
+            <p>NWS and IP systems are primarily designed for controlled environments and cannot be suitable for observing gait in daily situations. On the other hand, WS systems can collect data in real-life situations and provide insights into how individuals walk. However, a notable challenge with WS is that they impact the user's walking pattern and comfort. This issue can be mitigated using small devices with built-in Inertial Measurements Units.</p>
+
+            <h3>1.2 Literature Review</h3>
+            
+            <h4>1.2.1 Person Gait Cycle</h4>
+            <p>To examine and analyse walking patterns, understanding the gait cycle is essential. The gait cycle is defined as the sequence of movements from one foot strike to the subsequent foot strike on the same side.</p>
+            
+            <p>A complete gait cycle involves two distinct phases:</p>
+            <ul>
+                <li><strong>Stance Phase:</strong> When the foot is in contact with the ground</li>
+                <li><strong>Swing Phase:</strong> When the foot is moving forward through the air</li>
+            </ul>
+
+            <h4>1.2.2 Stance and Swing Phase</h4>
+            <p><strong>Stance Phase:</strong> A normal gait cycle begins and ends with the heel strike, which is when the leading foot first contacts the ground. This marks the start of the load response phase, during which the leading foot bears the body's weight as it fully contacts the ground. The heel strike and foot flat events are characterized by rapid loading of the limb. During the double support phase, both feet are in contact with the ground, providing maximum stability.</p>
+            
+            <p>In the midstance phase, the body moves forward while the opposite leg enters the swing phase. This position is less stable due to the narrow base of support and the higher centre of gravity. The heel off event, where the heel lifts from the ground, signals the transition from midstance to terminal stance.</p>
+            
+            <p><strong>Swing Phase:</strong> The swing phase begins as the swinging leg moves forward past the stance leg, contributing to forward progression. This phase is divided into three sub-phases:</p>
+            <ul>
+                <li><strong>Initial Swing:</strong> The leg accelerates forward</li>
+                <li><strong>Mid-Swing:</strong> The leg passes the opposite stance leg</li>
+                <li><strong>Terminal Swing:</strong> The leg decelerates in preparation for the next heel strike</li>
+            </ul>
+
+            <h4>1.2.3 Biomechanics During Gait Cycle</h4>
+            <p>Gait analysis is based on two primary methods:</p>
+            
+            <p><strong>Kinetics:</strong> Examines the forces involved in generating walking movements. These forces are calculated from ground-reaction forces and then traced through the lower limbs and joints using biomechanical models.</p>
+            
+            <p><strong>Kinematics:</strong> Focuses on the movement of the body through space, analysing the position and motion of body segments and the angular displacements of joints.</p>
+            
+            <div class="highlight-box">
+                <p><strong>IMU Sensors for Gait Cycle:</strong></p>
+                <p>An Inertial Measurement Unit (IMU) is a device that combines several sensors to track different types of motion and orientation:</p>
+                <ul>
+                    <li><strong>Accelerometers:</strong> Measure acceleration along three axes (x, y, z)</li>
+                    <li><strong>Gyroscopes:</strong> Measure the rate of rotation around three axes</li>
+                    <li><strong>Orientation Sensors:</strong> Track the device's spatial orientation</li>
+                </ul>
+            </div>
+
+            <h4>1.2.4 Related Work</h4>
+            <p>Recent studies have increasingly focused on analysing the gait cycle using wearable sensor systems with IMUs. The use of IMUs lies in their cost-effectiveness and versatility compared to traditional laboratory setups, which often constrain movement and create controlled environments that may not accurately reflect real-world conditions.</p>
+            
+            <p>Most previous research has utilized either two or three IMU sensors placed on the lower limb. Studies employing two IMU sensors typically position them on the hip and shank, while three-sensor studies add an extra sensor on the foot.</p>
+
+            <h4>1.2.5 Research Objectives</h4>
+            <p>The aims of this research are as follows:</p>
+            <ol>
+                <li>Develop an Android application model that retrieves Inertial Measurement Unit (IMU) values of acceleration, angular velocity, and orientation while the individual is in motion</li>
+                <li>Analyse the gait cycle using the retrieved IMU data during movement</li>
+            </ol>
+        </section>
+
+        <!-- Methodology -->
+        <section id="methodology">
+            <h2>2. Methodology</h2>
+            
+            <p>Approval for this research project was granted by the Human Research Ethics Committee (Non-Medical) due to the collection of data from a user. The ethics clearance number for this project is MIAEC 109/24W. One participant, a male in his 20s, contributed valuable insights for the research.</p>
+
+            <h3>2.1 Development of Model for Data Collection</h3>
+            <p>To access the IMU and GPS hardware values of the phone, an application model capable of retrieving real-time data from the sensors was developed. The application was created using Android Studio IDE version Ladybug | 2024.2.1 due to its features including:</p>
+            <ul>
+                <li>An emulator for virtual testing during development without needing a physical device</li>
+                <li>A layout editor for designing user interface with built-in controls</li>
+            </ul>
+            
+            <p>The programming language used was Kotlin, as it allows for importing resources and libraries from Google services such as location tracking that improve application performance.</p>
+            
+            <div class="highlight-box">
+                <p><strong>Application Features:</strong></p>
+                <ul>
+                    <li><strong>IMU Kinematics:</strong> Records acceleration (x, y, z), angular velocity, and orientation (pitch, roll, yaw)</li>
+                    <li><strong>GPS Tracking:</strong> Visualizes longitude and latitude for path tracking, calculates distance and average speed</li>
+                    <li><strong>User Controls:</strong> Start/stop motion sensing with configurable sample rates starting from 1 Hz</li>
+                    <li><strong>Data Storage:</strong> Firebase Realtime Database (1 GB storage, 10 GB/month downloads)</li>
+                </ul>
+            </div>
+
+            <h3>2.2 Data Collection Approach</h3>
+            <p>The experiment was conducted using a Huawei smartphone with the app installed. Motion data was recorded with the phone mounted on two different segments of the body: the shank, thigh, hand, and upper arm. For each body segment, motion recordings were taken three times, differentiated by the type of movement: relaxed walking, fast walking, and jogging.</p>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Movement Type</th>
+                            <th>Sampling Rate</th>
+                            <th>Rationale</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Relaxed Walking</td>
+                            <td>25 Hz</td>
+                            <td>Suitable for slower motion dynamics</td>
+                        </tr>
+                        <tr>
+                            <td>Fast Walking</td>
+                            <td>50 Hz</td>
+                            <td>Captures increased motion frequency</td>
+                        </tr>
+                        <tr>
+                            <td>Jogging</td>
+                            <td>75 Hz</td>
+                            <td>Accommodates rapid kinematic changes</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <p>The same device was used throughout the data collection process, with a minimum distance travelled of 20 meters. Data collection was performed outside the building, as GPS tracking yields more accurate results outdoors compared to indoor settings.</p>
+        </section>
+
+        <!-- Data Processing -->
+        <section id="data-processing">
+            <h2>3. Data Processing</h2>
+            
+            <h3>3.1 Raw Data Cleaning and Preprocessing</h3>
+            <p>The raw data from the IMU includes acceleration in the x, y, and z directions, angular velocities about the x, y, and z axes, and orientation data indicating pitch, roll, and yaw angles. The GPS data includes latitude, longitude, total distance, and average speed.</p>
+            
+            <p>During pre-processing, samples from the beginning and end of each recording were removed to eliminate data captured during phone placement and removal:</p>
+            <ul>
+                <li><strong>Relaxed Walking:</strong> First and last 75 samples removed (3 seconds at 25 Hz)</li>
+                <li><strong>Fast Walking:</strong> First and last 150 samples removed</li>
+                <li><strong>Jogging:</strong> First and last 225 samples removed</li>
+            </ul>
+
+            <h3>3.2 Verification and Validation of the Data</h3>
+            <p>To validate the IMU, GPS was used as a reference. The recorded latitude and longitude were traced on Google Maps to verify that the coordinates accurately represented the actual path travelled during data collection.</p>
+            
+            <h4>Distance Calculation Using Haversine Formula</h4>
+            <p>The distance between two locations defined by longitude and latitude was determined using the Haversine formula:</p>
+            
+            <div class="equation">
+                distance = 2R × arcsin(√[sin²((φ₁ - φ₂)/2) + cos(φ₁)cos(φ₂)sin²((λ₁ - λ₂)/2)])
+            </div>
+            
+            <p>where R is the Earth's radius (6,371 km), φ₁ and φ₂ are the latitudes of the two locations (in radians), and λ₁ and λ₂ are the longitudes of the two locations (in radians).</p>
+            
+            <h4>Numerical Integration for Position Estimation</h4>
+            <p>To analyse the IMU acceleration data, integration techniques were used. The cumulative trapezoidal rule was employed for numerical integration:</p>
+            
+            <div class="equation">
+                <strong>Velocity approximation:</strong><br>
+                ẋ(tᵢ) = ẋ(tᵢ₋₁) + [(tᵢ - tᵢ₋₁)/2][ẍ(tᵢ₋₁) + ẍ(tᵢ)]
+            </div>
+            
+            <div class="equation">
+                <strong>Position approximation:</strong><br>
+                x(tᵢ) = x(tᵢ₋₁) + [(tᵢ - tᵢ₋₁)/2][ẋ(tᵢ₋₁) + ẋ(tᵢ)]
+            </div>
+            
+            <p>The comparison between GPS and IMU total distance showed that although the GPS output increases linearly while the IMU follows a nonlinear trend, both methods yield comparable total distances over the same time duration.</p>
+        </section>
+
+        <!-- Results -->
+        <section id="results">
+            <h2>4. Results and Discussion</h2>
+            
+            <h3>4.1 Gait Identification from IMU</h3>
+            <p>This section presents an analysis of the gait cycle phases derived from data collected during motion. The focus is on the mapping of the Stance and Swing phases across three types of gaits: relaxed walking, fast walking, and jogging.</p>
+
+            <h4>4.1.1 Relaxed Walking Gait Cycle</h4>
+            <p>Gait identification was primarily based on three key parameters: acceleration in the x-direction, angular velocity around the y-axis, and the tilt angle of yaw.</p>
+            
+            <div class="highlight-box">
+                <p><strong>Stance Phase Dynamics:</strong></p>
+                <ul>
+                    <li><strong>Mid-stance:</strong> Leg straight forward, perpendicular to ground, yaw angle at zero</li>
+                    <li><strong>Terminal stance transition:</strong> Leg angle reaches minimum (~-15°) as leg extends backward</li>
+                    <li><strong>Terminal stance:</strong> Leg at furthest backward position with minimal acceleration</li>
+                </ul>
+                
+                <p><strong>Pre-Swing Phase Dynamics:</strong></p>
+                <ul>
+                    <li>Leg accelerates forward from terminal stance</li>
+                    <li>Increasing thigh angle as leg moves forward</li>
+                    <li>Peak thigh angle at mid-swing with leg fully extended forward</li>
+                </ul>
+                
+                <p><strong>Swing Phase Dynamics:</strong></p>
+                <ul>
+                    <li><strong>Terminal swing:</strong> Sudden deceleration in preparation for heel strike</li>
+                    <li><strong>Loading response:</strong> Angle decreases, acceleration approaches zero as leg absorbs impact</li>
+                    <li><strong>Return to mid-stance:</strong> Completing the gait cycle</li>
+                </ul>
+            </div>
+
+            <h4>4.1.2 Fast Walking Gait Cycle</h4>
+            <p>During fast walking, the analysis relied on acceleration in the x-direction, angular velocity about the z-axis, and orientation indicated by the yaw angle.</p>
+            
+            <p>Key observations:</p>
+            <ul>
+                <li><strong>Heel Strike:</strong> Acceleration of approximately 5 m/s² at ground contact</li>
+                <li><strong>Loading Response:</strong> Notable change in angular velocity with fluctuations due to phone movement in pocket</li>
+                <li><strong>Terminal Stance:</strong> Angle at lowest point (~-17°) representing maximum stability</li>
+                <li><strong>Forward Swing:</strong> Peak acceleration of approximately 12 m/s² during forward motion</li>
+            </ul>
+
+            <h3>4.2 Arm Swing Cycle Identification from IMU</h3>
+            
+            <h4>4.2.1 Relaxed Walking Arm Swing Cycle</h4>
+            <p>The arm swing cycle was mapped starting from the mid-swing forward direction:</p>
+            <ul>
+                <li><strong>Mid-Swing Forward:</strong> Arm parallel to body, yaw angle 0°, minimum acceleration</li>
+                <li><strong>Forward Swing:</strong> Arm accelerates forward reaching maximum 5 m/s², maximum angle ~38°</li>
+                <li><strong>Backward Swing:</strong> Direction reverses, returns to mid-swing with minimum acceleration</li>
+            </ul>
+
+            <h4>4.2.2 Fast Walking Arm Swing Cycle</h4>
+            <p>Fast walking showed increased dynamics compared to relaxed walking:</p>
+            <ul>
+                <li><strong>Maximum acceleration:</strong> 10 m/s² (vs. 5 m/s² in relaxed walking)</li>
+                <li><strong>Swing angles:</strong> Maximum ~58°, minimum -20° (greater range of motion)</li>
+                <li><strong>Angular velocity:</strong> Maximum 5 rad/s, minimum -5 rad/s (faster transitions)</li>
+            </ul>
+
+            <h3>4.3 Overall Identified Gait Cycle Statistics</h3>
+            
+            <h4>Phone in Pocket Placement</h4>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Metric</th>
+                            <th>Relaxed</th>
+                            <th>Fast</th>
+                            <th>Jogging</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td rowspan="4"><strong>Acceleration (m/s²)</strong></td>
+                            <td>Mean</td>
+                            <td>-0.317</td>
+                            <td>-0.090</td>
+                            <td>0.372</td>
+                        </tr>
+                        <tr>
+                            <td>Max</td>
+                            <td>7.939</td>
+                            <td>8.868</td>
+                            <td>10.224</td>
+                        </tr>
+                        <tr>
+                            <td>Min</td>
+                            <td>-20.282</td>
+                            <td>-19.005</td>
+                            <td>-26.962</td>
+                        </tr>
+                        <tr>
+                            <td>Std Dev</td>
+                            <td>2.708</td>
+                            <td>3.140</td>
+                            <td>5.124</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="4"><strong>Angular Velocity (rad/s)</strong></td>
+                            <td>Mean</td>
+                            <td>0.038</td>
+                            <td>0.013</td>
+                            <td>0.074</td>
+                        </tr>
+                        <tr>
+                            <td>Max</td>
+                            <td>2.795</td>
+                            <td>6.647</td>
+                            <td>6.636</td>
+                        </tr>
+                        <tr>
+                            <td>Min</td>
+                            <td>-2.187</td>
+                            <td>-3.530</td>
+                            <td>-5.709</td>
+                        </tr>
+                        <tr>
+                            <td>Std Dev</td>
+                            <td>0.851</td>
+                            <td>1.432</td>
+                            <td>1.981</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="4"><strong>Orientation [Yaw] (°)</strong></td>
+                            <td>Mean</td>
+                            <td>-3.920</td>
+                            <td>-3.234</td>
+                            <td>-9.335</td>
+                        </tr>
+                        <tr>
+                            <td>Max</td>
+                            <td>6.923</td>
+                            <td>66.097</td>
+                            <td>-0.675</td>
+                        </tr>
+                        <tr>
+                            <td>Min</td>
+                            <td>-17.695</td>
+                            <td>-13.956</td>
+                            <td>-20.388</td>
+                        </tr>
+                        <tr>
+                            <td>Std Dev</td>
+                            <td>6.372</td>
+                            <td>9.244</td>
+                            <td>3.819</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4>Phone Held in Hand Placement</h4>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Metric</th>
+                            <th>Relaxed</th>
+                            <th>Fast</th>
+                            <th>Jogging</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td rowspan="4"><strong>Acceleration (m/s²)</strong></td>
+                            <td>Mean</td>
+                            <td>0.067</td>
+                            <td>-0.034</td>
+                            <td>3.362</td>
+                        </tr>
+                        <tr>
+                            <td>Max</td>
+                            <td>7.032</td>
+                            <td>13.211</td>
+                            <td>35.945</td>
+                        </tr>
+                        <tr>
+                            <td>Min</td>
+                            <td>-6.448</td>
+                            <td>-12.660</td>
+                            <td>-28.080</td>
+                        </tr>
+                        <tr>
+                            <td>Std Dev</td>
+                            <td>3.809</td>
+                            <td>6.465</td>
+                            <td>14.600</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="4"><strong>Angular Velocity (rad/s)</strong></td>
+                            <td>Mean</td>
+                            <td>-0.016</td>
+                            <td>-0.005</td>
+                            <td>-0.076</td>
+                        </tr>
+                        <tr>
+                            <td>Max</td>
+                            <td>2.711</td>
+                            <td>2.635</td>
+                            <td>4.417</td>
+                        </tr>
+                        <tr>
+                            <td>Min</td>
+                            <td>-1.534</td>
+                            <td>-3.630</td>
+                            <td>-5.721</td>
+                        </tr>
+                        <tr>
+                            <td>Std Dev</td>
+                            <td>0.617</td>
+                            <td>0.766</td>
+                            <td>1.718</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="4"><strong>Orientation [Yaw] (°)</strong></td>
+                            <td>Mean</td>
+                            <td>13.683</td>
+                            <td>13.039</td>
+                            <td>44.586</td>
+                        </tr>
+                        <tr>
+                            <td>Max</td>
+                            <td>45.250</td>
+                            <td>74.987</td>
+                            <td>80.673</td>
+                        </tr>
+                        <tr>
+                            <td>Min</td>
+                            <td>-15.800</td>
+                            <td>-34.280</td>
+                            <td>-12.300</td>
+                        </tr>
+                        <tr>
+                            <td>Std Dev</td>
+                            <td>16.805</td>
+                            <td>29.038</td>
+                            <td>23.256</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4>4.3.1 Rate of Forward Movement</h4>
+            <p>Acceleration along the x-axis provides an important measure of the forward motion of the body during walking. The results from different motion conditions showed clear distinctions in both magnitude and variability of acceleration.</p>
+            
+            <p><strong>Phone Inside Left Side Pocket:</strong></p>
+            <ul>
+                <li><strong>Relaxed Walking:</strong> Mean acceleration of -0.317 m/s² with standard deviation of 2.708 m/s², indicating consistent slow motion. High max/min values due to path discontinuities.</li>
+                <li><strong>Fast Walking:</strong> Mean acceleration increased to -0.090 m/s² with standard deviation of 3.140 m/s², showing greater variation due to pace changes.</li>
+                <li><strong>Jogging:</strong> Significant change with mean acceleration of 0.372 m/s² and large standard deviation of 5.124 m/s², reflecting irregular nature with higher forces and larger fluctuations.</li>
+            </ul>
+            
+            <p><strong>Phone Held by Left Hand:</strong></p>
+            <ul>
+                <li><strong>Relaxed Walking:</strong> Positive mean acceleration of 0.067 m/s² indicating more stable movement, larger standard deviation (3.809) reflecting variability.</li>
+                <li><strong>Fast Walking:</strong> Standard deviation increased to 6.465, maximum acceleration of 13.211 m/s² indicating more dynamic movement.</li>
+                <li><strong>Jogging:</strong> Highly variable with mean of 3.362 m/s² and large standard deviation of 14.600, maximum acceleration of 35.945 m/s² highlighting significant forward movement increase.</li>
+            </ul>
+
+            <h4>4.3.2 Orientation of Body Segment</h4>
+            <p>Yaw describes the angular displacement of the device relative to the x-axis, indicating the angle of the thigh during different phases of walking. Minimum yaw corresponds to terminal stance phase, while maximum yaw indicates terminal swing phase before heel strike.</p>
+            
+            <p><strong>Phone Inside Pocket:</strong></p>
+            <ul>
+                <li><strong>Relaxed Walking:</strong> Mean yaw of -3.92° with standard deviation of 6.37°, indicating position closer to terminal stance with some variability.</li>
+                <li><strong>Fast Walking:</strong> Mean yaw of -3.23° with smaller standard deviation of 3.82°, suggesting more stable thigh rotation during faster walking.</li>
+                <li><strong>Jogging:</strong> Larger fluctuations with mean of -3.23° and standard deviation of 9.24°, indicating significant rotational movement due to increased dynamics.</li>
+            </ul>
+            
+            <p><strong>Phone Held in Hand:</strong></p>
+            <ul>
+                <li><strong>Relaxed Walking:</strong> Mean yaw of 13.68° with high standard deviation (16.81°), indicating shift toward terminal swing phase with substantial variation.</li>
+                <li><strong>Fast Walking:</strong> Mean yaw of 13.04° with large standard deviation (29.04°), reflecting variable phone orientation during faster movements.</li>
+                <li><strong>Jogging:</strong> Highest variation with mean of 44.59° and standard deviation of 23.26°, indicating significant rotation as thigh orientation shifted between phases.</li>
+            </ul>
+        </section>
+
+        <!-- Conclusion -->
+        <section id="conclusion">
+            <h2>5. Conclusions and Recommendations</h2>
+            
+            <p>This study demonstrates the feasibility and effectiveness of using a single Inertial Measurement Unit (IMU) for gait cycle analysis in real-world settings, facilitated by a custom Android application. The project successfully identified distinct gait phases (stance and swing) across various movement types, including relaxed walking, fast walking, and jogging.</p>
+            
+            <div class="highlight-box">
+                <p><strong>Key Achievements:</strong></p>
+                <ul>
+                    <li>A single IMU system positioned at various body points captured essential gait characteristics (acceleration, angular velocity, orientation)</li>
+                    <li>Analysis quality comparable to multi-sensor setups was achieved</li>
+                    <li>GPS validation confirmed reliability of IMU-derived displacement estimates</li>
+                    <li>Adaptive sampling rates (25-100 Hz) effectively matched motion dynamics</li>
+                    <li>Gait phase detection remained reliable even with increased signal noise in handheld configuration</li>
+                </ul>
+            </div>
+            
+            <p>This portable approach presents a practical and non-intrusive solution for gait analysis, with potential applications in:</p>
+            <ul>
+                <li><strong>Healthcare:</strong> Patient mobility monitoring and rehabilitation tracking</li>
+                <li><strong>Security:</strong> Biometric identification systems</li>
+                <li><strong>Fitness:</strong> Personal performance tracking and activity monitoring</li>
+                <li><strong>Research:</strong> Cost-effective data collection for gait studies</li>
+            </ul>
+            
+            <h3>Recommendations for Future Work</h3>
+            <ol>
+                <li><strong>Expand Data Collection:</strong> Incorporate a more diverse participant group including individuals of varying age groups, body types, and gait abnormalities to improve model robustness and generalizability</li>
+                <li><strong>Enhance Application Interface:</strong> Add automated data cleaning features and improve usability for broader accessibility</li>
+                <li><strong>Implement Real-Time Analysis:</strong> Develop real-time gait analysis and feedback functionalities for immediate insights, especially valuable in rehabilitation and fitness contexts</li>
+                <li><strong>Machine Learning Integration:</strong> Implement machine learning algorithms for automated gait classification and anomaly detection</li>
+                <li><strong>Cross-Platform Development:</strong> Extend the application to iOS devices to reach wider user base</li>
+                <li><strong>Long-Term Studies:</strong> Conduct longitudinal studies to track gait changes over time</li>
+            </ol>
+        </section>
+
+        <!-- References -->
+        <section id="references">
+            <h2>References</h2>
+            
+            <div class="reference">[1] S. Dimple, B. Sourabh and P. Chandra, "A comprehensive survey on gait analysis: History," Artificial Intelligence in Medicine, vol. 129, p. 102341, 2022.</div>
+            
+            <div class="reference">[2] Saboor, Abdul and Kask, Triin and Kuusik, Alar and Alam, Muhammad and Le Moullec, Yannick and Niazi, Imran and Zoha, Ahmed and Ahmad and Rizwan, "Latest Research Trends in Gait Analysis Using Wearable Sensors and Machine Learning: A Systematic Review," IEEE Access, vol. 8, 09 2020.</div>
+            
+            <div class="reference">[3] Chen, Xin and Weng, Jian and Lu, Wei and Xu and Jiaming, "Multi-Gait Recognition Based on Attribute Discovery," IEEE Transactions on Pattern Analysis and Machine Intelligence, vol. 7, pp. 1697-1710, 2018.</div>
+            
+            <div class="reference">[4] Gaud, Neha and Rathore, Maya and Suman and Ugrasen, "Human Gait Analysis and Activity Recognition: A Review," 2023 IEEE Guwahati Subsection Conference (GCON), pp. 1-6, 2023.</div>
+            
+            <div class="reference">[5] Yamamoto, Masataka and Shimatani, Koji and Ishige, Yuto and Takemura and Hiroshi, "Verification of gait analysis method fusing camera-based pose estimation and an IMU sensor in various gait conditions," Scientific Reports, vol. 12, 10 2022.</div>
+            
+            <div class="reference">[6] Muro, Alvaro and Zapirain and Begoña and Mendez-Zorri, "Gait Analysis Methods: An Overview of Wearable and Non-Wearable Systems, Highlighting Clinical Applications," Sensors (Basel, Switzerland), vol. 14, pp. 3362-94, 02 2014.</div>
+            
+            <div class="reference">[7] Avellar, Letícia and Leal Junior and Arnaldo and Diaz, "POF Smart Carpet: A Multiplexed Polymer Optical Fiber-Embedded Smart Carpet for Gait Analysis," Sensors, p. 3356, 07 2019.</div>
+            
+            <div class="reference">[8] Chambers, Henry and Sutherland and David, "A Practical Guide to Gait Analysis," The Journal of the American Academy of Orthopaedic Surgeons, vol. 10, pp. 222-31, 05 2002.</div>
+            
+            <div class="reference">[9] Pirker, Walter and Katzenschlager and Regina, "Gait disorders in adults and the elderly: A clinical guide," Wiener klinische Wochenschrift, vol. 129, 10 2016.</div>
+            
+            <div class="reference">[10] Rueterbories, Jan and Spaich, Erika G. and Larsen, Birgit and Andersen and Ole, "Methods for gait detection and analysis in ambulatory systems," Medical engineering & physics, vol. 32, pp. 545-52, 04 2010.</div>
+            
+            <div class="reference">[11] U. Keisuke, A. Penny R., N. M. Fiorentino and A. Andrew E, "Hip rotation during standing and dynamic activities and the compensatory effect of femoral anteversion: An in-vivo analysis of asymptomatic young adults using three-dimensional computed tomography models and dual fluoroscopy," Gait & Posture, vol. 61, pp. 276-281, 2018.</div>
+            
+            <div class="reference">[12] Warmerdam, Elke and Romijnders, Robbin and Welzel, Julius and Hansen, Clint and Schmidt, Gerhard and Maetzler and Walter, "Quantification of Arm Swing during Walking in Healthy Adults and Parkinson's Disease Patients: Wearable Sensor-Based Algorithm Development and Validation," Sensors, p. 105963, 2020.</div>
+            
+            <div class="reference">[13] M. Pieter, S. M. Bruijn and Jacques, "The how and why of arm swing during human walking," Gait & Posture, vol. 38, no. 4, pp. 555-562, 2013.</div>
+            
+            <div class="reference">[14] Sant'Anna, Anita and Wickström and Nicholas, "Symbolic Approach to Motion Analysis: Framework and Gait Analysis Case Studies," pp. 557-602, 01 2013.</div>
+            
+            <div class="reference">[15] R. Aravinda, R. Marko, L. Yuguang, H. Songbo, F. Yihai, K. Kourosh, P. Marimuthu and N. Tuan, "Real-time monitoring of construction sites: Sensors, methods, and applications," Automation in Construction, vol. 136, p. 104099, 2022.</div>
+            
+            <div class="reference">[16] "Accelerometer Sensor," Arduino, [Online]. Available: https://sensorkit.arduino.cc/sensorkit/module/lessons/lesson/09-the-accelerometer-sensor. [Accessed 17 09 2024].</div>
+            
+            <div class="reference">[17] R. Lei, J. Richard K. and H. David, "Whole body inverse dynamics over a complete gait cycle based only on measured kinematics," Journal of Biomechanics, vol. 41, no. 12, pp. 2750-2759, 2008.</div>
+            
+            <div class="reference">[18] Çelik, Yunus and Stuart, Samuel and Woo, Wai Lok and Godfrey and Alan, "Wearable Inertial Gait Algorithms: Impact of Wear Location and Environment in Healthy and Parkinson's Populations," Sensors, 09 2021.</div>
+            
+            <div class="reference">[19] Ekdahl, Mitchell and Loewen, Alex and Erdman, Ashley and Sahin, Sarp and Ulman and Sophia, "Inertial Measurement Unit Sensor-to-Segment Calibration Comparison for Sport-Specific Motion Analysis," Sensors, vol. 23, p. 7987, 09 2023.</div>
+            
+            <div class="reference">[20] Z. Tobias, T. Bertram and B. Gabriele, "IMU-to-Segment Assignment and Orientation Alignment for the Lower Body Using Deep Learning," Sensors (Basel, Switzerland), vol. 18, 2018.</div>
+            
+            <div class="reference">[21] Azdy, Rezania and Darnis and Febriyanti, "Use of Haversine Formula in Finding Distance Between Temporary Shelter and Waste End Processing Sites," Journal of Physics: Conference Series, vol. 1500, p. 012104, 04 2020.</div>
+            
+            <div class="reference">[22] Chin, Robin and Hsiao-Wecksler, Elizabeth and Loth, Eric and Kogler, Geza and Manwaring, Scott and Tyson, Serena and Shorter, Kenneth and Gilmer and Joel, "A pneumatic power harvesting ankle-foot orthosis to prevent foot-drop," Journal of neuroengineering and rehabilitation, p. 19, 07 2009.</div>
+            
+            <div class="reference">[23] W. Xingchen, K. Maria, R. Danijela, Durrant, S. Matthias and Axel, "Monitoring of gait performance using dynamic time warping on IMU-sensor data," 2016 IEEE International Symposium on Medical Measurements and Applications (MeMeA), pp. 1-6, 2016.</div>
+        </section>
+
+        <!-- Appendices -->
+        <section id="appendices">
+            <h2>Appendices</h2>
+            
+            <h3>Appendix A: Android Application Code</h3>
+            <div class="code-block">
+                Mobile Application Data Retrieving Model<br>
+                GitHub Repository: <a href="https://github.com/Osca-K/Person-Motion-Measurement-App" style="color: var(--accent);">https://github.com/Osca-K/Person-Motion-Measurement-App</a>
+            </div>
+            
+            <h3>Appendix B: AI Disclosure</h3>
+            <div class="highlight-box">
+                <p><strong>1. Editing/Refining Grammar, Spelling, Formatting</strong></p>
+                <p>I acknowledge the use of QuillBot (https://quillbot.com/) and ChatGPT (https://chatgpt.com/) version GPT-3.5 2024 to improve grammar. I pasted text that I generated and formulated myself into the ChatGPT text box and entered prompts to highlight grammatical errors and suggest potential fixes.</p>
+                
+                <p><strong>2. Generated/Manipulated Images</strong></p>
+                <p>I acknowledge the use of RemoveBG (https://www.remove.bg/) and Fotor (https://www.fotor.com/) to remove background color and text from images used in my information resources. These tools were used to clean sourced images by removing background color, changing it to white to match the main document, and erasing irrelevant text.</p>
+                
+                <p><strong>3. Code Debugging</strong></p>
+                <p>I acknowledge the use of ChatGPT (https://chatgpt.com/) to debug MATLAB code that I created. I entered my MATLAB code into the ChatGPT interface and used prompts to review the code and identify logical or mathematical errors. Based on my ability, I critically evaluated whether the suggestions made sense and determined if ChatGPT provided accurate debugging before making changes.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop" onclick="scrollToTop()">↑</button>
+
+    <script>
+        // Generate animated grid cells
+        function generateGridCells() {
+            const gridBg = document.getElementById('gridBg');
+            const cellCount = 15;
+            
+            for (let i = 0; i < cellCount; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.style.left = Math.random() * 100 + '%';
+                cell.style.top = Math.random() * 100 + '%';
+                cell.style.animationDelay = Math.random() * 4 + 's';
+                gridBg.appendChild(cell);
+            }
+        }
+
+        // Toggle mobile menu
+        function toggleMenu() {
+            const navLinks = document.getElementById('navLinks');
+            navLinks.classList.toggle('active');
+        }
+
+        // Show/hide back to top button
+        window.addEventListener('scroll', function() {
+            const backToTop = document.getElementById('backToTop');
+            if (window.pageYOffset > 300) {
+                backToTop.style.display = 'flex';
+            } else {
+                backToTop.style.display = 'none';
+            }
+        });
+
+        // Scroll to top
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    // Close mobile menu if open
+                    document.getElementById('navLinks').classList.remove('active');
+                }
+            });
+        });
+
+        // Initialize
+        generateGridCells();
+    </script>
+</body>
+</html>

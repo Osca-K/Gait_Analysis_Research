@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gait Cycle Analysis Using Single IMU System | Osca Kholopha</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Animated Grid Background -->
+    <div class="grid-background" id="gridBg"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="#" class="nav-brand">← Portfolio</a>
+            <button class="mobile-menu-btn" onclick="toggleMenu()">☰</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#abstract">Abstract</a></li>
+                <li><a href="#introduction">Introduction</a></li>
+                <li><a href="#methodology">Methodology</a></li>
+                <li><a href="#data-processing">Data Processing</a></li>
+                <li><a href="#results">Results</a></li>
+                <li><a href="#conclusion">Conclusion</a></li>
+                <li><a href="#references">References</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Paper Header -->
+        <div class="paper-header">
+            <h1>Person's Gait Cycle Analysis Using Single IMU System</h1>
+            <div class="paper-meta">
+                <strong>Author:</strong> Osca Kholopha (1863498)<br>
+                <strong>Course:</strong> MECN4006 - Mechanical Engineering Research Project<br>
+                <strong>Project Code:</strong> ATK9<br>
+                <strong>Supervisor:</strong> M. Michael<br>
+                <strong>Date:</strong> October 5, 2024
+            </div>
+            <div class="badge">Ethics Clearance: MIAEC 109/24W</div>
+        </div>
+
+        <!-- Abstract -->
+        <section id="abstract">
+            <h2>Abstract</h2>
+            <p>This research investigates the use of a single Inertial Measurement Unit (IMU) embedded in an Android device to analyse human gait cycles in real-world conditions. Ethics approval was granted by the Human Research Ethics Committee (Non-Medical) at the University of the Witwatersrand (Clearance No. MIAEC 109/24W).</p>
+            <p>A mobile application model was developed to collect IMU data of acceleration, angular velocity, and orientation as well as GPS data for simultaneous motion tracking. GPS readings were used to validate displacement estimates derived from IMU integration, confirming the system’s reliability in real-time movement analysis.</p>
+            <p>Data was collected across three gait categories: relaxed walking, fast walking, and jogging. Each category was sampled at a distinct rate to match its motion dynamics: 25 Hz for relaxed walking, 75 Hz for fast walking, and 100 Hz for jogging. The device was tested in two placements: inside the pocket and held by hand.</p>
+            <p>IMU signals were used to map the stance phases for the lower body and swing phases for the upper body of the gait cycle, forming the basis for gait identification. Jogging produced peak accelerations of 18.2 m/s² and stance durations averaging 0.32 seconds. Relaxed walking showed lower peak accelerations around 9.5 m/s² and longer stance durations near 0.58 seconds. Fast walking exhibited intermediate values, with stride intervals averaging 1.12 seconds. Despite increased signal noise in the handheld configuration, gait phase detection remained reliable.</p>
+            <p>These findings demonstrate that a single IMU, combined with adaptive sampling rates and GPS validation, can effectively distinguish gait types and phases. The system offers a low-cost, portable solution for gait analysis with applications in fitness tracking, health monitoring, and biometric identification. Future work will focus on broader demographic testing and machine learning integration.</p>
+        </section>
+
+        <!-- Introduction -->
+        <section id="introduction">
+            <h2>1 INTRODUCTION</h2>
+            <h3>1.1 Background and Motivation</h3>
+            <p>Gait refers to the pattern of movement that enables locomotion. It involves a rhythmic series of leg movements that propel the body forward while conserving energy, as shown in Figure 2. The application of gait analysis has grown significantly, finding relevance in areas such as healthcare, sports science, security recognition systems, and fitness. This project focuses on gait analysis for recognition purposes [1, 2].</p>
+            <p>A number of studies have investigated gait analysis, including notable contributions from Chen et al. [3] and Gaud et al. [4]. These researchers employed different data collection methods for gait analyses, characterised into Non-Wearable Sensors (NWS), Wearable Sensors (WS), and Image Processing (IP). NWS and IP systems collect gait data in controlled environments with strategically placed sensors (refer to Figure 1a and Figure 1c). In contrast, WS systems offer more flexibility, allowing sensors to be positioned on different parts of the body such as the hips, knees, or feet to measure different aspects of gait (refer to Figure 1b).</p>
+            <div class="figure medium">
+                <img src="Images/Fig1 Diff sensor type for gait analyses.png" alt="Different types of sensors for gait analyses: a) NWS system, b) WS system, c) IP system">
+                <div class="figure-caption">
+                    <strong>Figure 1:</strong> Different types of sensors for gait analyses [5, 6, 7].<br>
+                    a) NWS system &nbsp;&nbsp; b) WS system &nbsp;&nbsp; c) IP system
+                </div>
+            </div>
+            <p>NWS and IP systems are primarily designed for controlled environments, and they cannot be suitable for observing gait in daily situations. On the other hand, WS systems can collect data in real-life situations and provide insights into how individuals walk. However, a notable challenge with WS, as shown in Figure 1b, is that they impact the user's walking pattern and comfort. This issue can be mitigated using small devices with built-in Inertial Measurement Units, which will be elaborated upon in the Biomechanics during gait cycle section.</p>
+            <h3>1.2 Literature Review</h3>
+            <p>To examine and analyse walking patterns, understanding gait cycle which is defined as the sequence of movements from one foot strike to the subsequent foot strike on the same side is important for this study [8]. This section will explore more on gait cycle, detailing how movements can be analysed and the distinctive gait cycle that can be identified through this analysis. These characteristics can be used for biometric identification to uniquely recognize individuals.</p>
+            <h4>1.2.1 Person gait cycle</h4>
+            <p>A complete gait cycle involves two distinct phases: the stance phase and the swing phase. Figure 2 illustrates the gait cycle of a walking person, highlighting the events occurring in each phase.</p>
+            <div class="figure medium">
+                <img src="Images/Fig2 Gait Cycle.png" alt="Gait Cycle Diagram">
+                <div class="figure-caption">
+                    <strong>Figure 2:</strong> Complete gait cycle [9]
+                </div>
+            </div>
+            <h4>1.2.2 Stance and swing phase</h4>
+            <h5>Stance phase</h5>
+            <p>As shown in Figure 2 above, a normal gait cycle begins and ends with the heel strike, which is when the leading foot first contacts the ground. This marks the start of the load response phase, during which the leading foot bears the body's weight as it fully contacts the ground. The heel strike and foot flat events are characterized by a rapid loading of the limb. During the double support phase, both feet are in contact with the ground, providing maximum stability. In the midstance phase, the body moves forward while the opposite leg enters the swing phase. This position is less stable due to the narrow base of support and the higher centre of gravity. The heel off event, where the heel lifts from the ground, signals the transition from midstance to terminal stance. In the terminal stance phase, the body continues to move forward until the pre-swing phase begins, leading to the toe-off event where the toes lose contact with the ground [10].</p>
+            <h5>Swing phase</h5>
+            <p>The swing phase then begins as the swinging leg moves forward past the stance leg, contributing to forward progression. This phase is divided into three sub-phases namely, the initial swing, where the leg accelerates forward; the mid-swing, where the leg passes the opposite stance leg; and the terminal swing, where the leg decelerates in preparation for the next heel strike, which will end the swing phase [10].</p>
+            <p>The events in each part of the gait cycle help track the movement of the lower limb. They are important for identifying and distinguishing each step during walking. This swing and stance phases are used to specify different conditions when modelling the human walking pattern. Other factors that are induced during the gait cycle are hip rotation and arm swing which are explained below.</p>
+            
+            <p>In the midstance phase, the body moves forward while the opposite leg enters the swing phase. This position is less stable due to the narrow base of support and the higher centre of gravity. The heel off event, where the heel lifts from the ground, signals the transition from midstance to terminal stance.</p>
+            
+            <p><strong>Swing Phase:</strong> The swing phase begins as the swinging leg moves forward past the stance leg, contributing to forward progression. This phase is divided into three sub-phases:</p>
+            <ul>
+                <li><strong>Initial Swing:</strong> The leg accelerates forward</li>
+                <li><strong>Mid-Swing:</strong> The leg passes the opposite stance leg</li>
+                <li><strong>Terminal Swing:</strong> The leg decelerates in preparation for the next heel strike</li>
+            </ul>
+
+            <h4>1.2.3 Biomechanics During Gait Cycle</h4>
+            <p>Gait analysis is based on two primary methods:</p>
+            
+            <p><strong>Kinetics:</strong> Examines the forces involved in generating walking movements. These forces are calculated from ground-reaction forces and then traced through the lower limbs and joints using biomechanical models.</p>
+            
+            <p><strong>Kinematics:</strong> Focuses on the movement of the body through space, analysing the position and motion of body segments and the angular displacements of joints [10].</p>
+
+            <p>During walking, the hips undergo rotational movements that contribute to the efficiency of gait. The pelvis rotates forward on the side of the swinging leg, allowing for a longer stride length without requiring additional leg length [11].</p>
+
+            <!-- Figure 3: Hip Rotation -->
+            <div class="figure small">
+                <img src="Images/Fig3 Hip rotation.png" alt="Hip rotation during gait cycle">
+                <div class="figure-caption">
+                    <strong>Figure 3:</strong> Hip rotation during standing and dynamic activities [11].
+                </div>
+            </div>
+
+            <p>During walking, the arms swing in a coordinated pattern opposite to the legs to maintain balance and reduce rotational momentum. The arm swing cycle is closely linked to the leg movements and contributes to the overall efficiency of locomotion [12, 13].</p>
+
+            <!-- Figure 4 & 5: Arm Swing -->
+            <div class="figure-grid">
+                <div class="figure small">
+                    <img src="Images/Fig4 Swing movement of arm during Gait Cycle.png" alt="Arm swing movement during gait cycle">
+                    <div class="figure-caption">
+                        <strong>Figure 4:</strong> Swing movement of arm during gait cycle [12].
+                    </div>
+                </div>
+                <div class="figure small">
+                    <img src="Images/Fig5 Arm swing movement during gait cycle.png" alt="Arm swing movement patterns">
+                    <div class="figure-caption">
+                        <strong>Figure 5:</strong> Arm swing movement patterns during walking [13].
+                    </div>
+                </div>
+            </div>
+
+            <p>The biomechanics of gait can be analysed through both kinetic and kinematic approaches, providing comprehensive understanding of the forces and movements involved in walking [14].</p>
+
+            <!-- Figure 6: Biomechanics Analysis -->
+            <div class="figure medium">
+                <img src="Images/Fig6 Biomechanics analysis for gait cycle.png" alt="Biomechanics analysis for gait cycle">
+                <div class="figure-caption">
+                    <strong>Figure 6:</strong> Biomechanics analysis for gait cycle showing kinetic and kinematic measurements [14].
+                </div>
+            </div>
+
+            <h4>1.2.4 IMU Sensors for Gait Cycle</h4>
+            <p>An Inertial Measurement Unit (IMU) is a device that combines several sensors to track different types of motion and orientation [15]:</p>
+            <ul>
+                <li><strong>Accelerometers:</strong> Measure linear acceleration along three axes (x, y, z), detecting changes in velocity and gravitational effects</li>
+                <li><strong>Gyroscopes:</strong> Measure angular velocity (rate of rotation) around three axes, tracking rotational movement</li>
+                <li><strong>Magnetometers:</strong> Measure magnetic field strength to determine orientation relative to Earth's magnetic north</li>
+            </ul>
+
+            <!-- Figure 7: Sensors for Kinetics and Kinematics -->
+            <div class="figure medium">
+                <img src="Images/Fig 7 Sensors for Kinetics and Kinematics motion.png" alt="Sensors for kinetics and kinematics motion">
+                <div class="figure-caption">
+                    <strong>Figure 7:</strong> Sensors used for kinetics and kinematics motion analysis [15].
+                </div>
+            </div>
+
+            <!-- Figure 9: Gyroscope and Human Motion -->
+            <div class="figure small">
+                <img src="Images/Fig9 Gyroscope angular velocity sensor and dirrectional human motion.png" alt="Gyroscope angular velocity and directional human motion">
+                <div class="figure-caption">
+                    <strong>Figure 9:</strong> Gyroscope angular velocity sensor and directional human motion [16].
+                </div>
+            </div>
+
+            <h4>1.2.5 Related Work</h4>
+            <p>Recent studies have increasingly focused on analysing the gait cycle using wearable sensor systems with IMUs [2]. The appeal of IMUs lies in their cost-effectiveness and versatility compared to traditional laboratory setups, which often constrain movement and create controlled environments that may not accurately reflect real-world conditions [18].</p>
+            
+            <p>Most previous research has utilized either two or three IMU sensors placed on the lower limb. Studies employing two IMU sensors typically position them on the hip and shank, while three-sensor studies add an extra sensor on the foot [19, 20]. This research aims to demonstrate that effective gait analysis can be achieved with a single IMU sensor embedded in a smartphone.</p>
+
+            <h4>1.2.6 Research Objectives</h4>
+            <p>The aims of this research are as follows:</p>
+            <ol>
+                <li>Develop an Android application model that retrieves Inertial Measurement Unit (IMU) values of acceleration, angular velocity, and orientation while the individual is in motion</li>
+                <li>Analyse the gait cycle using the retrieved IMU data during movement</li>
+            </ol>
+        </section>
+
+        <!-- Methodology -->
+        <section id="methodology">
+            <h2>2 METHODOLOGY</h2>
+            <p>Approval for this research project was granted by the Human Research Ethics Committee (Non-Medical) due to the collection of data from a user. The ethics clearance number for this project is MIAEC 109/24W. One participant, a male in his 20s, contributed valuable insights for the research. The flow diagram below illustrates the methodology of this research, detailing the process from data collection to data processing. Further details are provided in the following sections.</p>
+            <div class="figure large">
+                <img src="Images/Fig11 Flow diagram of the data collection to results.png" alt="Flow diagram of the data collection to results">
+                <div class="figure-caption">
+                    <strong>Figure 11:</strong> Flow diagram of the data collection to results
+                </div>
+            </div>
+            <h3>2.1 Development of Model for Data Collection</h3>
+            <p>To access the IMU and GPS hardware values of the phone, an application model capable of retrieving real-time data from the sensors was developed. The application was created using the Android Studio Integrated Development Environment (IDE) version Ladybug | 2024.2.1 due to its features including an emulator for virtual testing during development without needing a physical device, and a layout editor for designing a user interface with built-in controls. The programming language used was Kotlin, as it allows for importing resources and libraries from Google services such as location that improve application performance for tracking.</p>
+            <div class="figure small">
+                <img src="Images/Fig12 Mobile phone coordinate system.png" alt="Mobile phone coordinate system">
+                <div class="figure-caption">
+                    <strong>Figure 12:</strong> Mobile phone coordinate system [28]
+                </div>
+            </div>
+            <p>The developed application model for data retrieving includes a user interface that displays sensor readings from the GPS and IMU hardware. The kinematics under IMU include acceleration, which records linear acceleration in the x, y, and z directions; angular velocity around the x, y, and z axes of the phone; and orientation, which captures the tilting of the phone based on pitch, roll, and yaw, as shown in Figure 12. Both types of kinematic data are updated using the predefined update rates of SENSOR_DELAY_FASTEST and SENSOR_DELAY_GAME, which provide the quickest updates reflecting the current state of motion.</p>
+            <p>For location tracking, GPS functionality was integrated into the user interface, enabling visualization of longitude and latitude for tracking the path taken, as well as calculating distance and average speed. For GPS to function, permission to access the device's location must be granted.</p>
+            <p>The user controls are designed to allow users to start and stop motion sensing on the device, with the ability to log motion data to a database at a specified sample rate, starting as low as 1 Hz. The database used is Firebase Realtime Database, which supports the storage of real-time data. Firebase was chosen for its provision of 1 GB of total storage and 10 GB/month of download capacity.</p>
+            <div class="figure medium">
+                <img src="Images/Fig13 User  Interface for data retriving and collection model.png" alt="User Interface (UI) for data retrieving and collection model">
+                <div class="figure-caption">
+                    <strong>Figure 13:</strong> User Interface (UI) for data retrieving and collection model
+                </div>
+            </div>
+            <div class="figure medium">
+                <img src="Images/Fig14 Verfying the functionality of the code.png" alt="Verifying the functionality of the code">
+                <div class="figure-caption">
+                    <strong>Figure 14:</strong> Verifying the functionality of the code
+                </div>
+            </div>
+            <h3>2.2 Data Collection Approach</h3>
+            <p>The experiment was conducted using a Huawei smartphone with the app installed. Motion data was recorded with the phone mounted on two different segments of the body: the shank, thigh, hand, and upper arm. For each body segment, motion recordings were taken three times, differentiated by the type of movement: relaxed walking, fast walking, and jogging.</p>
+            <p>The motion data recorded from the Inertial Measurement Unit (IMU) included acceleration, orientation, and pitch, while GPS data provided longitude and latitude for motion tracking. For relaxed walking, a sampling rate of 25 Hz was set; for fast walking, the sampling rate increased to 50 Hz; and for jogging, a sampling rate of 75 Hz was employed. This increase in sampling rate from relaxed walking to jogging was implemented to accommodate the faster changes in motion occurring during these activities. As the speed of movement increases, the kinematic changes also require a higher sampling rate to accurately capture these variations, ensuring that the collected motion data reflects the true nature of the movements.</p>
+            <p>The same device was used throughout the data collection process, with a minimum distance travelled of 20 meters. This distance was chosen to ensure that the requested sampling rate did not exceed the limits of the database. Data collection was performed outside the building, as GPS tracking yields more accurate results outdoors compared to indoor settings.</p>
+        </section>
+
+        <!-- Data Processing -->
+        <section id="data-processing">
+            <h2>3. Data Processing</h2>
+            
+            <h3>3.1 Raw Data Cleaning and Preprocessing</h3>
+            <p>The raw data from the IMU includes acceleration in the x, y, and z directions, angular velocities about the x, y, and z axes, and orientation data indicating pitch, roll, and yaw angles. The GPS data includes latitude, longitude, total distance, and average speed.</p>
+            
+            <p>During pre-processing, samples from the beginning and end of each recording were removed to eliminate data captured during phone placement and removal:</p>
+            <ul>
+                <li><strong>Relaxed Walking:</strong> First and last 75 samples removed (3 seconds at 25 Hz)</li>
+                <li><strong>Fast Walking:</strong> First and last 150 samples removed (3 seconds at 50 Hz)</li>
+                <li><strong>Jogging:</strong> First and last 225 samples removed (3 seconds at 75 Hz)</li>
+            </ul>
+
+            <h3>3.2 Verification and Validation of the Data</h3>
+            <p>To validate the IMU measurements, GPS was used as a reference. The recorded latitude and longitude were traced on Google Maps to verify that the coordinates accurately represented the actual path travelled during data collection.</p>
+            
+            <h4>3.2.1 Distance Calculation Using Haversine Formula</h4>
+            <p>The distance between two locations defined by longitude and latitude was determined using the Haversine formula [21]:</p>
+            
+            <!-- Equation 1: Distance Equation -->
+            <div class="figure small">
+                <div class="equation-img">
+                    <img src="Images/EQ1 Distance Equation.png" alt="Haversine Distance Equation">
+                </div>
+                <div class="figure-caption">
+                    <strong>Equation 1:</strong> Haversine formula for calculating distance between two GPS coordinates.
+                </div>
+            </div>
+            
+            <p>Where R is the Earth's radius (6,371 km), φ₁ and φ₂ are the latitudes of the two locations (in radians), and λ₁ and λ₂ are the longitudes of the two locations (in radians).</p>
+
+            <!-- Figure 16: GPS Data Processing -->
+            <div class="figure medium">
+                <img src="Images/Fig16 Processing of GPS data to get the distance and average speed.png" alt="Processing GPS data for distance and speed">
+                <div class="figure-caption">
+                    <strong>Figure 16:</strong> Processing of GPS data to calculate distance and average speed.
+                </div>
+            </div>
+
+            <!-- Figure 17: Traced Path -->
+            <div class="figure medium">
+                <img src="Images/Fig17 Traced path during the data collection.png" alt="Traced path during data collection">
+                <div class="figure-caption">
+                    <strong>Figure 17:</strong> Traced path on Google Maps during data collection, verifying GPS accuracy.
+                </div>
+            </div>
+            
+            <h4>3.2.2 Numerical Integration for Position Estimation</h4>
+            <p>To analyse the IMU acceleration data, numerical integration techniques were used. The relationship between acceleration, velocity, and position is governed by the fundamental equations of kinematics:</p>
+            
+            <!-- Equation 2: Velocity Equation -->
+            <div class="figure small">
+                <div class="equation-img">
+                    <img src="Images/EQ2 Velocity Equation.png" alt="Velocity Equation">
+                </div>
+                <div class="figure-caption">
+                    <strong>Equation 2:</strong> Velocity as the integral of acceleration.
+                </div>
+            </div>
+
+            <!-- Equation 3: Position Equation -->
+            <div class="figure small">
+                <div class="equation-img">
+                    <img src="Images/EQ3 Position Equation.png" alt="Position Equation">
+                </div>
+                <div class="figure-caption">
+                    <strong>Equation 3:</strong> Position as the integral of velocity.
+                </div>
+            </div>
+
+            <p>The cumulative trapezoidal rule was employed for numerical integration:</p>
+
+            <!-- Equation 4: Velocity Approximation -->
+            <div class="figure small">
+                <div class="equation-img">
+                    <img src="Images/EQ4 Velocity Approxiamtion.png" alt="Velocity Approximation using Trapezoidal Rule">
+                </div>
+                <div class="figure-caption">
+                    <strong>Equation 4:</strong> Velocity approximation using the cumulative trapezoidal rule.
+                </div>
+            </div>
+
+            <!-- Equation 5: Position Approximation -->
+            <div class="figure small">
+                <div class="equation-img">
+                    <img src="Images/EQ5 Position Approximation.png" alt="Position Approximation using Trapezoidal Rule">
+                </div>
+                <div class="figure-caption">
+                    <strong>Equation 5:</strong> Position approximation using the cumulative trapezoidal rule.
+                </div>
+            </div>
+
+            <!-- Figure 18: IMU Distance Approximation -->
+            <div class="figure medium">
+                <img src="Images/Fig18 Using IMU to approximate the Distance.png" alt="Using IMU to approximate distance">
+                <div class="figure-caption">
+                    <strong>Figure 18:</strong> Using IMU acceleration data to approximate the total distance traveled.
+                </div>
+            </div>
+
+            <!-- Figure 19: IMU and GPS Validation -->
+            <div class="figure medium">
+                <img src="Images/Fi19 IMU and GPS total distance validation.png" alt="IMU and GPS total distance validation">
+                <div class="figure-caption">
+                    <strong>Figure 19:</strong> Comparison and validation of IMU-derived distance against GPS measurements.
+                </div>
+            </div>
+            
+            <p>The comparison between GPS and IMU total distance showed that although the GPS output increases linearly while the IMU follows a nonlinear trend, both methods yield comparable total distances over the same time duration. This validates the reliability of the IMU measurements for gait analysis.</p>
+        </section>
+
+        <!-- Results -->
+        <section id="results">
+            <h2>4 RESULTS</h2>
+            <h3>4.2 Arm Swing Cycle Identification from IMU</h3>
+            <p>This section presents the mapping of the arm motion as it correlates to the phases of the gait cycle, as detailed in the literature review, with the corresponding figure illustrating the different swing phases of the arm. The phases are for relaxed walking, fast walking, and jogging with a mobile held by left hand.</p>
+            <h4>4.2.1 Relaxed walking arm swing cycle</h4>
+            <p>The motion of relaxed walking with the phone held in the left hand is shown in the figure below, where the movement is divided into distinct segments. The stick figure, though not drawn to scale, represents the arm swing motion at various points in the gait cycle. These segments highlight the coordination between the arm's forward and backward swings, which correspond to the leg movements, as detailed in the gait cycle analysis. The figure illustrates how the arm's motion varies throughout the cycle, contributing to overall balance and energy efficiency during walking. Each segment captures a specific phase of the arm swing.</p>
+            <div class="figure medium">
+                <img src="Images/Fig22 Mapping of arm swing cycle to the retrieved  data from IMU.png" alt="Mapping of arm swing cycle to the retrieved data from IMU">
+                <div class="figure-caption">
+                    <strong>Figure 22:</strong> Mapping of arm swing cycle to the retrieved data from IMU
+                </div>
+            </div>
+            <p>The cycle of the arm swing is mapped starting from the mid-swing forward direction (denoted by position S1). In this position:</p>
+            <ul>
+                <li><strong>S1 (Mid-Swing Forward):</strong> The arm is in the mid-swing phase, where the yaw angle is 0°, and the arm is parallel to the body. At this point, the arm experiences its minimum acceleration, as it is neither accelerating forward nor backward.</li>
+                <li><strong>S1 to S2 (Forward Swing and Acceleration):</strong> As the arm continues to swing forward from S1 to S2, the angle of the arm increases, and it accelerates in the forward direction. The arm reaches its maximum acceleration of 5 m/s² during this phase. At S2, the arm reaches its maximum forward position, with the angular velocity being 0 rad/s, as it momentarily stops before changing direction. The arm's angle reaches a maximum of approximately 38°.</li>
+                <li><strong>S2 to S3 (Backward swing and deceleration):</strong> After S2, the arm begins to swing backward. The swing direction reverses, and the arm accelerates in the opposing direction. As the arm reaches the mid-swing backward phase (denoted by S3), it experiences minimum acceleration once again. The arm's orientation is now at 0°, similar to its initial position in S1. This marks the completion of one full cycle, which then repeats.</li>
+            </ul>
+            <h4>4.2.2 Fast walking arm swing cycle</h4>
+            <p>The mapping results for fast walking with the phone held in the left hand are shown in the figure below. This mapping illustrates the differences in the arm swing dynamics compared to relaxed walking, including variations in acceleration, swing angles, and angular velocity.</p>
+            <div class="figure medium">
+                <img src="Images/Fig23 Mapping of fast walking arm swing cycle.png" alt="Mapping of fast walking arm swing cycle">
+                <div class="figure-caption">
+                    <strong>Figure 23:</strong> Mapping of fast walking arm swing cycle
+                </div>
+            </div>
+            <ul>
+                <li><strong>Maximum and minimum acceleration:</strong> In fast walking, the arm experiences a much higher acceleration, reaching a maximum of 10 m/s² and a minimum of -10 m/s², compared to the lower accelerations observed during relaxed walking.</li>
+                <li><strong>Swing angles:</strong> The arm's swing amplitude is greater, with maximum and minimum swing angles of approximately 58° and -20°, respectively, reflecting the increased range of motion in fast walking.</li>
+                <li><strong>Angular velocity:</strong> The arm's angular velocity also increases, reaching a maximum of 5 rad/s and a minimum of -5 rad/s, indicating the faster motion and quicker transitions between forward and backward swings.</li>
+            </ul>
+            <p>These differences reflect the increased intensity and speed of the movement in fast walking, which leads to higher accelerations, greater angular velocities, and a broader range of arm motion compared to the relaxed walking cycle.</p>
+            <h3>4.3 Overall Identified Gait Cycle statics</h3>
+            <p>The overall calculated gaits for relaxed, fast, and jogging motions, with the mobile phone placed in both the pocket and the hand, are presented in Table 1 and Table 2.</p>
+            <div class="table-container">
+                <table>
+                    <caption>Table 1: Calculated gaits for pocket placement of the mobile phone</caption>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Mean</th>
+                            <th>Max</th>
+                            <th>Min</th>
+                            <th>Std</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5"><strong>Acceleration (m/s²)</strong></td></tr>
+                        <tr><td>Relaxed</td><td>-0.31695</td><td>7.93916</td><td>-20.2818</td><td>2.70778</td></tr>
+                        <tr><td>Fast</td><td>-0.09044</td><td>8.86816</td><td>-19.0051</td><td>3.14046</td></tr>
+                        <tr><td>Jogging</td><td>0.37244</td><td>10.2242</td><td>-26.9618</td><td>5.12404</td></tr>
+                        <tr><td colspan="5"><strong>Angular Velocity (rad/s)</strong></td></tr>
+                        <tr><td>Relaxed</td><td>0.03823</td><td>2.79464</td><td>-2.18652</td><td>0.85096</td></tr>
+                        <tr><td>Fast</td><td>0.01285</td><td>6.64679</td><td>-3.52965</td><td>1.43217</td></tr>
+                        <tr><td>Jogging</td><td>0.07408</td><td>6.63614</td><td>-5.70925</td><td>1.9805</td></tr>
+                        <tr><td colspan="5"><strong>Orientation [Yaw] (degree)</strong></td></tr>
+                        <tr><td>Relaxed</td><td>-3.91995</td><td>6.9226</td><td>-17.6953</td><td>6.37232</td></tr>
+                        <tr><td>Fast</td><td>-3.2336</td><td>66.0971</td><td>-13.9558</td><td>9.24381</td></tr>
+                        <tr><td>Jogging</td><td>-9.33518</td><td>-0.67476</td><td>-20.3876</td><td>3.81914</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-container">
+                <table>
+                    <caption>Table 2: Calculated gaits for hand placement of the mobile phone</caption>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Mean</th>
+                            <th>Max</th>
+                            <th>Min</th>
+                            <th>Std</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5"><strong>Acceleration (m/s²)</strong></td></tr>
+                        <tr><td>Relaxed</td><td>0.067</td><td>7.0317</td><td>-6.448</td><td>3.8087</td></tr>
+                        <tr><td>Fast</td><td>-0.034</td><td>13.211</td><td>-12.66</td><td>6.4649</td></tr>
+                        <tr><td>Jogging</td><td>3.3617</td><td>35.945</td><td>-28.08</td><td>14.6</td></tr>
+                        <tr><td colspan="5"><strong>Angular Velocity (rad/s)</strong></td></tr>
+                        <tr><td>Relaxed</td><td>-0.016</td><td>2.7106</td><td>-1.534</td><td>0.6168</td></tr>
+                        <tr><td>Fast</td><td>-0.005</td><td>2.6347</td><td>-3.63</td><td>0.766</td></tr>
+                        <tr><td>Jogging</td><td>-0.076</td><td>4.417</td><td>-5.721</td><td>1.7179</td></tr>
+                        <tr><td colspan="5"><strong>Orientation [Yaw] (degree)</strong></td></tr>
+                        <tr><td>Relaxed</td><td>13.683</td><td>45.25</td><td>-15.8</td><td>16.805</td></tr>
+                        <tr><td>Fast</td><td>13.039</td><td>74.987</td><td>-34.28</td><td>29.038</td></tr>
+                        <tr><td>Jogging</td><td>44.586</td><td>80.673</td><td>-12.3</td><td>23.256</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <h3>4.3.1 Rate of the forward movement</h3>
+            <p>Acceleration along the x-axis provides an important measure of the forward motion of the body during walking. The results from the different motion conditions—relaxed, fast, and jogging—showed clear distinctions in both the magnitude and variability of acceleration.</p>
+            <p><strong>Phone inside left side pocket for relaxed, fast, and jogging</strong></p>
+            <p>For a relaxed walk, the mean acceleration was -0.3169 m/s², indicating a slight deceleration in the forward direction during relaxed motion with a standard deviation of 2.7078 m/s², suggesting that the motion was more consistent with slow walking. The maximum acceleration 7.9392 m/s² and minimum -20.2818 m/s². For relaxed walking, both the maximum and minimum acceleration values are high. These accelerations can be traced back to the path taken, as it was not smooth. In some areas, there were steep discontinuities in the otherwise even path, which likely led to changes in acceleration.</p>
+            <p>During the fast-walking motion, the mean acceleration increased slightly to -0.0904 m/s², and the standard deviation increased to 3.1405 m/s², indicating more variation in the forward motion. This is expected as walking faster involves greater fluctuations in acceleration due to changes in pace. During jogging motion, a significant change occurred during this motion with a mean acceleration of 0.3724 m/s², indicating a positive forward motion. The large standard deviation of 5.1240 m/s² reflects the irregular nature of jogging, which involves higher forces and larger fluctuations in acceleration as the body moves faster and with more forceful steps. The maximum acceleration of 10.2242 m/s² represent the consistent with the increased intensity of jogging.</p>
+            <p><strong>Phone held by left Hand</strong></p>
+            <p>The mean acceleration of 0.0670 m/s² for relaxed walking with the phone held in hand was positive, suggesting a more stable movement compared to the pocket condition. The standard deviation (3.8087) was larger, reflecting slightly more variability in the hand-held condition and for fast walking, the standard deviation increased to (6.4649), which is consistent with the more pronounced fluctuations observed when walking at a faster pace. The maximum acceleration of 13.2112 m/s² reached its highest value in the hand condition, indicating more dynamic movement compared to the pocket condition. During jogging, the acceleration was highly variable, with a mean of 3.3617 m/s² and a large standard deviation of 14.5998, reflecting the intense motion of jogging. The maximum acceleration 35.9450 m/s² was much higher than any other condition, highlighting the significant increase in forward movement during jogging when the phone is held in the hand.</p>
+            <h3>4.3.2 Orientation of body segment</h3>
+            <p>Yaw in this research project was describing the angular displacement of the device relative to the x-axis, indicating the angle of the thigh during different phases of walking. A minimum yaw corresponds to the terminal stance phase, where the leg is fully extended whereas maximum yaw indicates the terminal swing phase, just before the heel strike, where the leg is in the swing phase.</p>
+            <p><strong>Phone inside a pocket</strong></p>
+            <p>During the relax motion, the mean yaw was -3.92°, indicating that during relaxed walking, the thigh was positioned closer to the terminal stance phase. The standard deviation of 6.37° suggests that there was some variability in thigh rotation and for a fast walk, the mean yaw decreased slightly to -3.23°, indicating that the device remained in a position close to the terminal stance phase during fast walking, with the thigh in a similar orientation. The smaller standard deviation of 3.82° suggests that the rotation of the thigh was more stable during faster walking, with less variability in the leg's movement and for jogging, the yaw during jogging showed larger fluctuations, with a mean value of -3.23° and a standard deviation of 9.24°.</p>
+            <p>This suggests that there was significant rotational movement of the thigh due to the increased dynamics of jogging, considering the higher force and speed during this activity.</p>
+            <p><strong>Phone held by left hand</strong></p>
+            <p>The mean yaw for the hand-held condition during relaxed walking was 13.68°, indicating a shift toward the terminal swing phase of the leg. This suggests that during relaxed walking with the phone held in the hand, the leg was positioned just before the heel strike, with outward rotation of the thigh. The high standard deviation (16.81°) indicates substantial variation in the thigh's orientation, likely due to more noticeable body rotation and posture changes. During fast walk, the mean yaw decreased slightly to 13.04°, and the standard deviation of 29.04° was still quite large compared to the relaxed walking condition. This suggests that while the thigh's rotation remained in the terminal swing phase, the phone's orientation was still quite variable, reflecting the faster movements during fast walking.</p>
+            <p>The yaw showed the highest variation during jogging, with a mean of 44.59° and a standard deviation of 23.26°. This large variation indicates that during jogging, the phone experienced significant rotation, as the thigh's orientation shifted between the terminal swing and heel strike phases with increased dynamics and force.</p>
+        </section>
+            <section id="data-processing">
+                <h2>3 DATA PROCESSING</h2>
+                <p>This section presents the pre-processing of the data retrieved during the motion captured in the experiments.</p>
+                <h3>3.1 Raw Data Cleaning and Preprocessing</h3>
+                <p>The current raw data from the Inertial Measurement Unit (IMU) is displayed below in graphical format due to the large volume of sampled values. This dataset presents only a relaxed walking scenario, with the phone placed in the left side pocket.</p>
+                <div class="figure medium">
+                    <img src="Images/Fig15 .png" alt="IMU graphical raw data for a relaxed walking with a phone on the left side pocket">
+                    <div class="figure-caption">
+                        <strong>Figure 15:</strong> IMU graphical raw data for a relaxed walking with a phone on the left side pocket
+                    </div>
+                </div>
+                <p>The results in Figure 15 represent the acceleration in the x, y, and z directions, as well as the angular velocities about the x, y, and z axes. Additionally, the orientation data is included, indicating pitch, roll, and yaw angles.</p>
+                <p>The raw data from the GPS is presented in Figure 16 below, corresponding to the relaxed walking scenario with the phone in the left side pocket. This dataset includes latitude, longitude, total distance, and average speed.</p>
+                <div class="figure medium">
+                    <img src="Images/Fig16 Processing of GPS data to get the distance and average speed.png" alt="Processing of GPS data to get the distance and average speed">
+                    <div class="figure-caption">
+                        <strong>Figure 16:</strong> Processing of GPS data to get the distance and average speed
+                    </div>
+                </div>
+                <p>The distance between the two locations defined by longitude and latitude was determined using the Haversine formula, a mathematical approach for measuring the distance between two points [21]. The formula calculates the distance along the shortest path between the points, which are specified by their latitude and longitude coordinates.</p>
+                <div class="figure small">
+                    <div class="equation-img">
+                        <img src="Images/EQ1 Distance Equation.png" alt="Haversine Distance Equation">
+                    </div>
+                    <div class="figure-caption">
+                        <strong>Equation 1:</strong> Haversine formula for calculating distance between two GPS coordinates.
+                    </div>
+                </div>
+                <p>where R is the Earth's radius (6,371 km), φ₁−φ₂ are the latitudes of the two locations (in radians), and λ₁−λ₂ are the longitudes of the two locations (in radians).</p>
+                <h3>3.2 Verification and Validation of the Data</h3>
+                <p>To validate the IMU, the GPS was used. Before using the GPS for validation, the recorded latitude and longitude obtained from the model, which defined the tracking of the person, were traced on Google Maps. This was done to determine whether the coordinates accurately represented the actual path travelled during data collection. The latitude and longitude data from the model for each experiment are shown in the figure below for path tracking.</p>
+                <div class="figure medium">
+                    <img src="Images/Fig17 Traced path during the data collection.png" alt="Traced path during the data collection">
+                    <div class="figure-caption">
+                        <strong>Figure 17:</strong> Traced path during the data collection
+                    </div>
+                </div>
+                <p>In both cases, the latitude accurately represented the actual path taken during the motion. The coordinates could be used to validate the sensor, as they effectively traced the actual walking path, as illustrated in Figure 17 above.</p>
+                <p>To analyse the data collected from the Inertial Measurement Unit (IMU), which includes acceleration 𝑥̈(𝑡) measurements in three-dimensional space, integration techniques from calculus is used. The recorded acceleration can be integrated to determine the velocity 𝑥̇(𝑡) and position displacement 𝑥(𝑡) over time, using the following equations.</p>
+                <div class="figure small">
+                    <div class="equation-img">
+                        <img src="Images/EQ2 Velocity Equation.png" alt="Velocity Equation">
+                    </div>
+                    <div class="figure-caption">
+                        <strong>Equation 2:</strong> Velocity calculation from acceleration data.
+                    </div>
+                </div>
+                <div class="figure small">
+                    <div class="equation-img">
+                        <img src="Images/EQ3 Position Equation.png" alt="Position Equation">
+                    </div>
+                    <div class="figure-caption">
+                        <strong>Equation 3:</strong> Position calculation from velocity data.
+                    </div>
+                </div>
+                <p>Because the acceleration data collected from the IMU is not continuous and consists of discrete samples taken at various points during motion, numerical integration methods is employed to accurately estimate velocity and position. The cumulative trapezoidal rule is used for numerical integration to handle the discrete nature of the data. The numerical integration equations used are detailed below.</p>
+                <div class="figure small">
+                    <div class="equation-img">
+                        <img src="Images/EQ4 Velocity Approxiamtion.png" alt="Velocity Approximation using Trapezoidal Rule">
+                    </div>
+                    <div class="figure-caption">
+                        <strong>Equation 4:</strong> Velocity approximation using the cumulative trapezoidal rule.
+                    </div>
+                </div>
+                <div class="figure small">
+                    <div class="equation-img">
+                        <img src="Images/EQ5 Position Approximation.png" alt="Position Approximation using Trapezoidal Rule">
+                    </div>
+                    <div class="figure-caption">
+                        <strong>Equation 5:</strong> Position approximation using the cumulative trapezoidal rule.
+                    </div>
+                </div>
+                <p>By applying these numerical integration techniques, both velocity and position can be effectively estimated based on the discrete acceleration data collected from the IMU.</p>
+                <div class="figure medium">
+                    <img src="Images/Fig18 Using IMU to approximate the Distance.png" alt="Using IMU to approximate the distance">
+                    <div class="figure-caption">
+                        <strong>Figure 18:</strong> Using IMU to approximate the distance
+                    </div>
+                </div>
+                <div class="figure medium">
+                    <img src="Images/Fi19 IMU and GPS total distance validation.png" alt="IMU and GPS total distance validation">
+                    <div class="figure-caption">
+                        <strong>Figure 19:</strong> IMU and GPS total distance validation
+                    </div>
+                </div>
+                <p>The comparison between GPS and IMU total distance (Figure 19) shows that although the GPS output increases linearly while the IMU follows a nonlinear trend, both methods yield comparable total distances over the same time duration.</p>
+            </section>
+                            <td>3.140</td>
+                            <td>5.124</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="4"><strong>Angular Velocity (rad/s)</strong></td>
+                            <td>Mean</td>
+                            <td>0.038</td>
+                            <td>0.013</td>
+                            <td>0.074</td>
+                        </tr>
+                        <tr>
+                            <td>Max</td>
+                            <td>2.795</td>
+                            <td>6.647</td>
+                            <td>6.636</td>
+                        </tr>
+                        <tr>
+                            <td>Min</td>
+                            <td>-2.187</td>
+                            <td>-3.530</td>
+                            <td>-5.709</td>
+                        </tr>
+                        <tr>
+                            <td>Std Dev</td>
+                            <td>0.851</td>
+                            <td>1.432</td>
+                            <td>1.981</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="4"><strong>Orientation [Yaw] (°)</strong></td>
+                            <td>Mean</td>
+                            <td>-3.920</td>
+                            <td>-3.234</td>
+                            <td>-9.335</td>
+                        </tr>
+                        <tr>
+                            <td>Max</td>
+                            <td>6.923</td>
+                            <td>66.097</td>
+                            <td>-0.675</td>
+                        </tr>
+                        <tr>
+                            <td>Min</td>
+                            <td>-17.695</td>
+                            <td>-13.956</td>
+                            <td>-20.388</td>
+                        </tr>
+                        <tr>
+                            <td>Std Dev</td>
+                            <td>6.372</td>
+                            <td>9.244</td>
+                            <td>3.819</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4>Phone Held in Hand Placement (Arm)</h4>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Metric</th>
+                            <th>Relaxed</th>
+                            <th>Fast</th>
+                            <th>Jogging</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td rowspan="4"><strong>Acceleration (m/s²)</strong></td>
+                            <td>Mean</td>
+                            <td>0.067</td>
+                            <td>-0.034</td>
+                            <td>3.362</td>
+                        </tr>
+                        <tr>
+                            <td>Max</td>
+                            <td>7.032</td>
+                            <td>13.211</td>
+                            <td>35.945</td>
+                        </tr>
+                        <tr>
+                            <td>Min</td>
+                            <td>-6.448</td>
+                            <td>-12.660</td>
+                            <td>-28.080</td>
+                        </tr>
+                        <tr>
+                            <td>Std Dev</td>
+                            <td>3.809</td>
+                            <td>6.465</td>
+                            <td>14.600</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="4"><strong>Angular Velocity (rad/s)</strong></td>
+                            <td>Mean</td>
+                            <td>-0.016</td>
+                            <td>-0.005</td>
+                            <td>-0.076</td>
+                        </tr>
+                        <tr>
+                            <td>Max</td>
+                            <td>2.711</td>
+                            <td>2.635</td>
+                            <td>4.417</td>
+                        </tr>
+                        <tr>
+                            <td>Min</td>
+                            <td>-1.534</td>
+                            <td>-3.630</td>
+                            <td>-5.721</td>
+                        </tr>
+                        <tr>
+                            <td>Std Dev</td>
+                            <td>0.617</td>
+                            <td>0.766</td>
+                            <td>1.718</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="4"><strong>Orientation [Yaw] (°)</strong></td>
+                            <td>Mean</td>
+                            <td>13.683</td>
+                            <td>13.039</td>
+                            <td>44.586</td>
+                        </tr>
+                        <tr>
+                            <td>Max</td>
+                            <td>45.250</td>
+                            <td>74.987</td>
+                            <td>80.673</td>
+                        </tr>
+                        <tr>
+                            <td>Min</td>
+                            <td>-15.800</td>
+                            <td>-34.280</td>
+                            <td>-12.300</td>
+                        </tr>
+                        <tr>
+                            <td>Std Dev</td>
+                            <td>16.805</td>
+                            <td>29.038</td>
+                            <td>23.256</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4>4.3.1 Discussion of Results</h4>
+            <p><strong>Acceleration Analysis:</strong> The acceleration data shows clear distinctions between different gait types. Relaxed walking exhibits the lowest variability (std dev = 2.708 m/s² in pocket), while jogging shows the highest (std dev = 5.124 m/s² in pocket). When the phone is held in hand, the variability increases significantly due to arm swing dynamics, with jogging showing a maximum acceleration of 35.945 m/s².</p>
+            
+            <p><strong>Angular Velocity Analysis:</strong> The angular velocity measurements demonstrate the rotational dynamics during walking. Fast walking and jogging show higher maximum angular velocities compared to relaxed walking, indicating more rapid limb movements at higher speeds.</p>
+            
+            <p><strong>Orientation Analysis:</strong> The yaw angle measurements reveal the angular displacement of the body segment during gait. The pocket placement shows smaller variations in yaw angle, while the handheld placement exhibits larger ranges due to the arm swing motion.</p>
+        </section>
+
+        <!-- Conclusion -->
+        <section id="conclusion">
+            <h2>5 CONCLUSIONS AND RECOMMENDATIONS</h2>
+            <p>This study demonstrates the feasibility and effectiveness of using a single Inertial Measurement Unit (IMU) for gait cycle analysis in real-world settings, facilitated by a custom Android application. The project successfully identified distinct gait phases (stance and swing) across various movement types, including relaxed walking, fast walking, and jogging. Results show that a single IMU system, positioned at various points on the body, can capture essential gait characteristics such as acceleration, angular velocity, and orientation, achieving an analysis quality comparable to multi-sensor setups. This portable approach presents a practical and non-intrusive solution for gait analysis, with potential applications in healthcare for patient mobility monitoring, in security for biometric identification, and in fitness for tracking personal performance.</p>
+            <p>To build on these findings, future work should consider expanding data collection by incorporating a more diverse participant group, including individuals of varying age groups, body types, and gait abnormalities, to improve model robustness and generalizability. Enhancing the Android application’s interface and adding automated data cleaning features would improve usability and broaden accessibility. Implementing real-time gait analysis and feedback functionalities could provide immediate insights, which would be especially valuable in rehabilitation and fitness tracking contexts.</p>
+        </section>
+
+        <!-- References -->
+        <section id="references">
+            <h2>6 REFERENCES</h2>
+            <ol>
+                <li>S. Dimple, B. Sourabh and P. Chandra, “A comprehensive survey on gait analysis: History,” Artificial Intelligence in Medicine, vol. 129, p. 102341, 2022.</li>
+                <li>Saboor, Abdul and Kask, Triin and Kuusik, Alar and Alam, Muhammad and Le Moullec, Yannick and Niazi, Imran and Zoha, Ahmed and Ahmad and Rizwan, “Latest Research Trends in Gait Analysis Using Wearable Sensors and Machine Learning: A Systematic Review,” IEEE Access, vol. 8, 09 2020.</li>
+                <li>Chen, Xin and Weng, Jian and Lu, Wei and Xu and Jiaming, “Multi-Gait Recognition Based on Attribute Discovery,” IEEE Transactions on Pattern Analysis and Machine Intelligence, vol. 7, pp. 1697-1710, 2018.</li>
+                <li>Gaud, Neha and Rathore, Maya and Suman and Ugrasen, “Human Gait Analysis and Activity Recognition: A Review,” 2023 IEEE Guwahati Subsection Conference (GCON), pp. 1-6, 2023.</li>
+                <li>Yamamoto, Masataka and Shimatani, Koji and Ishige, uto and Takemura and Hiroshi, “Verification of gait analysis method fusing camera-based pose estimation and an IMU sensor in various gait conditions,” Scientific Reports, vol. 12, 10 2022.</li>
+                <li>Muro, Alvaro and Zapirain and Begoña and Mendez-Zorri, “Gait Analysis Methods: An Overview of Wearable and Non-Wearable Systems, Highlighting Clinical Applications,” Sensors (Basel, Switzerland), vol. 14, pp. 3362-94, 02 2014.</li>
+                <li>Avellar, Letícia and Leal Junior and Arnaldo and Diaz, “POF Smart Carpet: A Multiplexed Polymer Optical Fiber-Embedded Smart Carpet for Gait Analysis,” Sensors, p. 3356, 07 2019.</li>
+                <li>Chambers, Henry and Sutherland and David, “A Practical Guide to Gait Analysis,” The Journal of the American Academy of Orthopaedic Surgeons, vol. 10, pp. 222-31, 05 2002.</li>
+                <li>Pirker, Walter and Katzenschlager and Regina, “Gait disorders in adults and the elderly: A clinical guide,” Wiener klinische Wochenschrift, vol. 129, 10 2016.</li>
+                <li>Rueterbories, Jan and Spaich, Erika G. and Larsen, Birgit and Andersen and Ole, “Methods for gait detection and analysis in ambulatory systems,” Medical engineering & physics, vol. 32, pp. 545-52, 04 2010.</li>
+                <li>U. Keisuke, A. Penny R., N. M. Fiorentino and . A. Andrew E, “Hip rotation during standing and dynamic activities and the compensatory effect of femoral anteversion: An in-vivo analysis of asymptomatic young adults using three-dimensional computed tomography models and dual fluoroscopy,” Gait & Posture, vol. 61, pp. 276-281, 2018.</li>
+                <li>Warmerdam, Elke and Romijnders, Robbin and Welzel, Julius and Hansen, Clint and Schmidt, Gerhard and Maetzler and Walter, “Quantification of Arm Swing during Walking in Healthy Adults and Parkinson's Disease Patients: Wearable Sensor-Based Algorithm Development and Validation,” Sensors, p. 105963, 2020.</li>
+                <li>M. Pieter, S. M. Bruijn and Jacques, “The how and why of arm swing during human walking,” Gait & Posture, vol. 38, no. 4, pp. 555-562, 2013.</li>
+                <li>Sant'Anna, Anita and Wickström and Nicholas, “Symbolic Approach to Motion Analysis: Framework and Gait Analysis Case Studies,” pp. 557-602, 01 2013.</li>
+                <li>R. Aravinda, R. Marko, L. Yuguang, H. Songbo, F. Yihai, K. Kourosh, P. Marimuthu and N. Tuan, “Real-time monitoring of construction sites: Sensors, methods, and applications,” Automation in Construction, vol. 136, p. 104099, 2022.</li>
+                <li>“Accelerometer Sensor,” Arduino, [Online]. Available: https://sensorkit.arduino.cc/sensorkit/module/lessons/lesson/09-the-accelerometer-sensor. [Accessed 17 09 2024].</li>
+                <li>R. Lei, . J. Richard K. and H. David, “Whole body inverse dynamics over a complete gait cycle based only on measured kinematics,” Journal of Biomechanics, vol. 41, no. 12, pp. 2750-2759, 2008.</li>
+                <li>Çelik, Yunus and Stuart, Samuel and Woo, Wai Lok and Godfrey and Alan, “Wearable Inertial Gait Algorithms: Impact of Wear Location and Environment in Healthy and Parkinson’s Populations,” Sensors, 09 2021.</li>
+                <li>Ekdahl, Mitchell and Loewen, Alex and Erdman, Ashley and Sahin, Sarp and Ulman and Sophia, “Inertial Measurement Unit Sensor-to-Segment Calibration Comparison for Sport-Specific Motion Analysis,” Sensors, vol. 23, p. 7987, 09 2023.</li>
+                <li>Z. Tobias, T. Bertram and B. Gabriele, “IMU-to-Segment Assignment and Orientation Alignment for the Lower Body Using Deep Learning,” Sensors (Basel, Switzerland), vol. 18, 2018.</li>
+                <li>Azdy, Rezania and Darnis and Febriyanti, “Use of Haversine Formula in Finding Distance Between Temporary Shelter and Waste End Processing Sites,” Journal of Physics: Conference Series, vol. 1500, p. 012104, 04 2020.</li>
+                <li>Chin, Robin and Hsiao-Wecksler, Elizabeth and Loth, Eric and Kogler, Geza and Manwaring, Scott and Tyson, Serena and Shorter, Kenneth and Gilmer and Joel, “A pneumatic power harvesting ankle-foot orthosis to prevent foot-drop,” Journal of neuroengineering and rehabilitation, p. 19, 07 2009.</li>
+                <li>W. Xingchen, K. Maria, R. Danijela, Durrant, S. Matthias and Axel, “Monitoring of gait performance using dynamic time warping on IMU-sensor data,” 2016 IEEE International Symposium on Medical Measurements and Applications (MeMeA), pp. 1-6, 2016.</li>
+                <li>Zhu, Jia-Xin and Wang, Weifeng and Huang, Shiping and Ding and Wei, “An Improved Calibration Technique for MEMS Accelerometer-Based Inclinometers,” Sensors, vol. 20, p. 452, 01 2020.</li>
+                <li>Galor, Noam, Zeilig, Gabriel and Plotnik and Meir, “A New Measure for Quantifying Four-Limb Coordination of Human Gait Based on Mobility Sensors,” Sensors, 09 2024.</li>
+                <li>O. Theresa, “Kinematics and kinetics of gait,” MEDICOL, 2020.</li>
+                <li>Chan, Carl W, Rubins and Andrew, “Foot Biomechanics During Walking and Running,” vol. 69, no. 0025-6196, pp. 448-461, 0501 1994.</li>
+                <li>R. Andersson, B.-G. Javier, A. Rafael, C. Mikael and C. José, “Smartphone IMU Sensors for Human Identification through Hip Joint Angle Analysis,” Sensors (Basel, Switzerland), vol. 24, no. 15, p. 4769, 2024.</li>
+            </ol>
+        </section>
+
+        <!-- Appendices -->
+        <section id="appendices">
+            <h2>APPENDICE</h2>
+            <h3>Appendices A1: Kotlin Code</h3>
+            <p>Mobile Application Data Retrieving Model<br>
+            <a href="https://github.com/Osca-K/Person-Motion-Measurement-App" target="_blank">https://github.com/Osca-K/Person-Motion-Measurement-App</a></p>
+            <h3>Appendices B1: Raw Data</h3>
+            <ul>
+                <li>Relaxed walking with mobile in pocket</li>
+                <li>Fast walking with mobile in pocket</li>
+                <li>Jogging walking with mobile in pocket</li>
+                <li>Relaxed walking with mobile in hand</li>
+                <li>Jogging walking with mobile in pocket</li>
+                <li>Relaxed walking with mobile in hand</li>
+            </ul>
+        </section>
+    </main>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop" onclick="scrollToTop()">↑</button>
+
+    <script src="script.js"></script>
+</body>
+</html>

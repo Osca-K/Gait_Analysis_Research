@@ -1,0 +1,429 @@
+/* Gait Analysis Research - style.css */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-primary: #0b0b0d;
+    --bg-secondary: #101013;
+    --bg-card: #111114;
+    --bg-card-alt: #0f0f12;
+    --text-primary: #f2f2f4;
+    --text-muted: #b9b9c3;
+    --text-muted-dark: #8c8c98;
+    --accent: #6e7cff;
+    --border: rgba(255,255,255,.10);
+    --border-light: rgba(255,255,255,.06);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: "Times New Roman", Times, Georgia, serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.8;
+    overflow-x: hidden;
+    font-size: 16px;
+}
+
+.grid-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+    background-size: 80px 80px;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.grid-cell {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border: 1px solid rgba(110, 124, 255, 0.3);
+    animation: glowPulse 4s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes glowPulse {
+    0%, 100% { opacity: 0; box-shadow: 0 0 10px rgba(110, 124, 255, 0); }
+    50% { opacity: 1; box-shadow: 0 0 20px rgba(110, 124, 255, 0.4); }
+}
+
+nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background: rgba(11, 11, 13, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    z-index: 1000;
+    padding: 1rem 2rem;
+}
+
+.nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-brand {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+}
+
+.nav-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.3s;
+    font-size: 0.9rem;
+}
+
+.nav-links a:hover {
+    color: var(--accent);
+}
+
+main {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 6rem 2rem 4rem;
+}
+
+.paper-header {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 3rem;
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.paper-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--text-primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.paper-meta {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin: 1rem 0;
+}
+
+.paper-meta strong {
+    color: var(--text-primary);
+}
+
+.badge {
+    display: inline-block;
+    background: rgba(110, 124, 255, 0.15);
+    color: var(--accent);
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    margin-top: 1rem;
+}
+
+section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+}
+
+h2 {
+    font-size: 1.8rem;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+}
+
+h3 {
+    font-size: 1.3rem;
+    color: var(--text-primary);
+    margin: 2rem 0 1rem;
+}
+
+h4 {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    margin: 1.5rem 0 0.75rem;
+}
+
+p {
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+    text-align: justify;
+}
+
+ul, ol {
+    margin: 1rem 0 1rem 2rem;
+    color: var(--text-muted);
+}
+
+li {
+    margin-bottom: 0.5rem;
+}
+
+/* Figure Styling - Compact and Clean */
+.figure {
+    background: linear-gradient(145deg, #1a1a1f, #0f0f12);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1.5rem auto;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    max-width: 700px;
+}
+
+.figure.small {
+    max-width: 450px;
+}
+
+.figure.medium {
+    max-width: 600px;
+}
+
+.figure.large {
+    max-width: 850px;
+}
+
+.figure.full {
+    max-width: 100%;
+}
+
+.figure img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.97);
+    padding: 0.75rem;
+    box-shadow: 0 2px 10px rgba(110, 124, 255, 0.1);
+}
+
+/* Equation images - Smaller and inline-friendly */
+.equation-img {
+    background: rgba(255,255,255,0.98);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    display: inline-block;
+    margin: 0.5rem 0;
+    box-shadow: 0 2px 8px rgba(110, 124, 255, 0.08);
+}
+
+.equation-img img {
+    max-width: 100%;
+    max-height: 60px;
+    height: auto;
+    display: block;
+}
+
+/* Figure grid for side-by-side images */
+.figure-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.figure-grid .figure {
+    margin: 0;
+    max-width: 100%;
+}
+
+.figure-caption {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 0.75rem;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+.figure-caption strong {
+    color: var(--accent);
+    font-style: normal;
+}
+
+.table-container {
+    overflow-x: auto;
+    margin: 2rem 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-card-alt);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+}
+
+th {
+    background: rgba(110, 124, 255, 0.1);
+    color: var(--accent);
+    font-weight: bold;
+}
+
+td {
+    color: var(--text-muted);
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+.equation {
+    background: var(--bg-card-alt);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    border-radius: 8px;
+    font-family: "Times New Roman", serif;
+    color: var(--text-primary);
+    overflow-x: auto;
+}
+
+.reference {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+    text-indent: -2rem;
+    color: var(--text-muted-dark);
+    font-size: 0.9rem;
+}
+
+.code-block {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+    color: var(--accent);
+    font-size: 0.9rem;
+}
+
+.highlight-box {
+    background: rgba(110, 124, 255, 0.08);
+    border-left: 4px solid var(--accent);
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    border-radius: 8px;
+}
+
+.back-to-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--accent);
+    color: var(--bg-primary);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: transform 0.3s;
+    z-index: 999;
+}
+
+.back-to-top:hover {
+    transform: translateY(-5px);
+}
+
+.mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--bg-secondary);
+        flex-direction: column;
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .nav-links.active {
+        display: flex;
+    }
+
+    .mobile-menu-btn {
+        display: block;
+    }
+
+    .paper-header h1 {
+        font-size: 1.8rem;
+    }
+
+    section {
+        padding: 1.5rem;
+    }
+
+    main {
+        padding: 5rem 1rem 2rem;
+    }
+}
+
+@media print {
+    body {
+        background: white;
+        color: black;
+    }
+
+    nav, .back-to-top, .grid-background {
+        display: none;
+    }
+
+    section {
+        page-break-inside: avoid;
+        border: 1px solid #ccc;
+    }
+}
