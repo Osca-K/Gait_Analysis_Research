@@ -17,7 +17,17 @@ function generateGridCells() {
 // Toggle mobile menu
 function toggleMenu() {
     const navLinks = document.getElementById('navLinks');
+    const menuBtn = document.getElementById('menuBtn');
     navLinks.classList.toggle('active');
+    menuBtn.classList.toggle('active');
+}
+
+// Close mobile menu
+function closeMenu() {
+    const navLinks = document.getElementById('navLinks');
+    const menuBtn = document.getElementById('menuBtn');
+    navLinks.classList.remove('active');
+    menuBtn.classList.remove('active');
 }
 
 // Show/hide back to top button
